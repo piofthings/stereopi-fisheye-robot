@@ -2,9 +2,9 @@
 #
 # This file is part of StereoPi tutorial scripts.
 #
-# StereoPi tutorial is free software: you can redistribute it 
+# StereoPi tutorial is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation, either version 3 of the 
+# as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
 # StereoPi tutorial is distributed in the hope that it will be useful,
@@ -13,14 +13,14 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with StereoPi tutorial.  
+# along with StereoPi tutorial.
 # If not, see <http://www.gnu.org/licenses/>.
 #
 #          <><><> SPECIAL THANKS: <><><>
 #
 # Thanks to Adrian and http://pyimagesearch.com, as a lot of
 # code in this tutorial was taken from his lessons.
-#  
+#
 # Thanks to RPi-tankbot project: https://github.com/Kheiden/RPi-tankbot
 #
 # Thanks to rakali project: https://github.com/sthysel/rakali
@@ -55,7 +55,10 @@ SPWS = 100
 # Camera settimgs
 cam_width = 1280
 cam_height = 480
-
+# Set if image needs to be flipped horizontally (flips only each camera image not left right stereo image)
+cam_hflip = False
+# set camera rotation - set it to 180 or 0 if your images are coming upside down
+cam_rotation = 180
 # Final image capture settings
 scale_ratio = 0.5
 
@@ -89,7 +92,8 @@ q = np.array([
 camera = PiCamera(stereo_mode='side-by-side',stereo_decimate=False)
 camera.resolution=(cam_width, cam_height)
 camera.framerate = 20
-camera.hflip = True
+camera.hflip = cam_hflip
+camera.rotation = cam_rotation
 
 # Initialize interface windows
 cv2.namedWindow("Image")
@@ -115,7 +119,7 @@ def stereo_depth_map(rectified_pair):
     disparity_color = cv2.applyColorMap(disparity_fixtype, cv2.COLORMAP_JET)
     if (showDisparity):
         cv2.imshow("Image", disparity_color)
-        key = cv2.waitKey(1) & 0xFF   
+        key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             quit();
     return disparity_color, disparity_fixtype, disparity
@@ -133,7 +137,7 @@ def load_map_settings( fName ):
     TTH=data['textureThreshold']
     UR=data['uniquenessRatio']
     SR=data['speckleRange']
-    SPWS=data['speckleWindowSize']    
+    SPWS=data['speckleWindowSize']
     #sbm.setSADWindowSize(SWS)
     sbm.setPreFilterType(1)
     sbm.setPreFilterSize(PFS)
@@ -156,7 +160,7 @@ try:
 except:
     print("Camera calibration data not found in cache, file ", './calibration_data/{}p/stereo_camera_calibration.npz'.format(img_height))
     exit(0)
-    
+
 imageSize = tuple(npzfile['imageSize'])
 leftMapX = npzfile['leftMapX']
 leftMapY = npzfile['leftMapY']
@@ -176,17 +180,17 @@ for frame in camera.capture_continuous(capture, format="bgra", use_video_port=Tr
     imgRight = pair_img [0:img_height,int(img_width/2):img_width] #Y+H and X+W
     imgR = cv2.remap(imgLeft, leftMapX, leftMapY, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     imgL = cv2.remap(imgRight, rightMapX, rightMapY, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    
-    # Taking a strip from our image for lidar-like mode (and saving CPU) 
+
+    # Taking a strip from our image for lidar-like mode (and saving CPU)
     imgRcut = imgR [80:160,0:int(img_width/2)]
     imgLcut = imgL [80:160,0:int(img_width/2)]
     rectified_pair = (imgLcut, imgRcut)
-    
+
     # Disparity map calculation
     disparity, disparity_bw, native_disparity  = stereo_depth_map(rectified_pair)
 
     maximized_line = native_disparity
-    
+
     maxInColumns = np.amax(maximized_line,0)
     points = cv2.reprojectImageTo3D(maxInColumns, QQ)
     xy_projection = np.zeros((map_height , map_width, 1), dtype=np.uint8)
@@ -195,20 +199,20 @@ for frame in camera.capture_continuous(capture, format="bgra", use_video_port=Tr
     if autotune_max < np.amax(maximized_line):
         autotune_max = np.amax(maximized_line)
     if autotune_min > np.amin(maximized_line):
-        autotune_min = np.amin(maximized_line)    
-    
+        autotune_min = np.amin(maximized_line)
+
     # Choose "closest" points in each column
     maximized_line[0:80,] = maxInColumns
-    
+
     # Colorizing final line
     max_line_tune = (maximized_line-autotune_min)*(65535.0/(autotune_max-autotune_min))
     max_line_gray = cv2.convertScaleAbs(max_line_tune, alpha=(255.0/65535.0))
 
     # Put all points to the 2D map
-    
+
     # Change map_zoom to adjust visible range!
     map_zoom = 50.0
-    
+
     for n, points in enumerate(points):
         cur_x = points[0][0]
         cur_y = points[0][1]
@@ -226,11 +230,9 @@ for frame in camera.capture_continuous(capture, format="bgra", use_video_port=Tr
     #print ("Autotune: min =", autotune_min, " max =", autotune_max)
     if (showUndistortedImages):
         cv2.imshow("left", imgLcut)
-        cv2.imshow("right", imgRcut)    
+        cv2.imshow("right", imgRcut)
     if (showColorizedDistanceLine):
         cv2.imshow("Max distance line", max_line_color)
-    cv2.imshow("XY projection", xy_projection_color)     
+    cv2.imshow("XY projection", xy_projection_color)
     t2 = datetime.now()
     #print ("DM build time: " + str(t2-t1))
-
-

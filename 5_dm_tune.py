@@ -2,9 +2,9 @@
 #
 # This file is part of StereoPi tutorial scripts.
 #
-# StereoPi tutorial is free software: you can redistribute it 
+# StereoPi tutorial is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation, either version 3 of the 
+# as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
 # StereoPi tutorial is distributed in the hope that it will be useful,
@@ -13,14 +13,14 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with StereoPi tutorial.  
+# along with StereoPi tutorial.
 # If not, see <http://www.gnu.org/licenses/>.
 #
 #          <><><> SPECIAL THANKS: <><><>
 #
 # Thanks to Adrian and http://pyimagesearch.com, as a lot of
 # code in this tutorial was taken from his lessons.
-#  
+#
 # Thanks to RPi-tankbot project: https://github.com/Kheiden/RPi-tankbot
 #
 # Thanks to rakali project: https://github.com/sthysel/rakali
@@ -42,6 +42,10 @@ photo_width = 640
 photo_height = 240
 image_width = 320
 image_height = 240
+# Set if image needs to be flipped horizontally (flips only each camera image not left right stereo image)
+cam_hflip = False
+# set camera rotation - set it to 180 or 0 if your images are coming upside down
+cam_rotation = 180
 
 image_size = (image_width,image_height)
 
@@ -51,11 +55,12 @@ if os.path.isfile(imageToDisp) == False:
     print ("Taking photo...")
     camera = PiCamera(stereo_mode='side-by-side',stereo_decimate=False)
     camera.resolution=(photo_width, photo_height)
-    camera.hflip = True
+    camera.hflip = cam_hflip
+    camera.rotation = cam_rotation
     time.sleep(1)
     camera.capture(imageToDisp)
     print ("Done!")
-    
+
 pair_img = cv2.imread(imageToDisp,0)
 # Read image and split it in a stereo pair
 print('Read and split image...')
@@ -70,7 +75,7 @@ try:
 except:
     print("Camera calibration data not found in cache, file " & './calibration_data/{}p/stereo_camera_calibration.npz'.format(480))
     exit(0)
-    
+
 imageSize = tuple(npzfile['imageSize'])
 leftMapX = npzfile['leftMapX']
 leftMapY = npzfile['leftMapY']
@@ -154,13 +159,13 @@ buttons = Button(saveax, 'Save settings', color=axcolor, hovercolor='0.975')
 
 def save_map_settings( event ):
     buttons.label.set_text ("Saving...")
-    print('Saving to file...') 
+    print('Saving to file...')
     result = json.dumps({'SADWindowSize':SWS, 'preFilterSize':PFS, 'preFilterCap':PFC, \
              'minDisparity':MDS, 'numberOfDisparities':NOD, 'textureThreshold':TTH, \
              'uniquenessRatio':UR, 'speckleRange':SR, 'speckleWindowSize':SPWS},\
              sort_keys=True, indent=4, separators=(',',':'))
     fName = '3dmap_set.txt'
-    f = open (str(fName), 'w') 
+    f = open (str(fName), 'w')
     f.write(result)
     f.close()
     buttons.label.set_text ("Save to file")
@@ -187,7 +192,7 @@ def load_map_settings( event ):
     sTTH.set_val(data['textureThreshold'])
     sUR.set_val(data['uniquenessRatio'])
     sSR.set_val(data['speckleRange'])
-    sSPWS.set_val(data['speckleWindowSize'])    
+    sSPWS.set_val(data['speckleWindowSize'])
     f.close()
     buttonl.label.set_text ("Load settings")
     print ('Parameters loaded from file '+fName)
@@ -207,12 +212,12 @@ dmObject = plt.imshow(disparity, aspect='equal', cmap='jet')
 # Draw interface for adjusting parameters
 print('Start interface creation (it takes up to 30 seconds)...')
 
-SWSaxe = plt.axes([0.15, 0.01, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
-PFSaxe = plt.axes([0.15, 0.05, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
-PFCaxe = plt.axes([0.15, 0.09, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
-MDSaxe = plt.axes([0.15, 0.13, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
-NODaxe = plt.axes([0.15, 0.17, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
-TTHaxe = plt.axes([0.15, 0.21, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height 
+SWSaxe = plt.axes([0.15, 0.01, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
+PFSaxe = plt.axes([0.15, 0.05, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
+PFCaxe = plt.axes([0.15, 0.09, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
+MDSaxe = plt.axes([0.15, 0.13, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
+NODaxe = plt.axes([0.15, 0.17, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
+TTHaxe = plt.axes([0.15, 0.21, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
 URaxe = plt.axes([0.15, 0.25, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
 SRaxe = plt.axes([0.15, 0.29, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
 SPWSaxe = plt.axes([0.15, 0.33, 0.7, 0.025], facecolor=axcolor) #stepX stepY width height
@@ -233,9 +238,9 @@ def update(val):
     global SWS, PFS, PFC, MDS, NOD, TTH, UR, SR, SPWS
     SWS = int(sSWS.val/2)*2+1 #convert to ODD
     PFS = int(sPFS.val/2)*2+1
-    PFC = int(sPFC.val/2)*2+1    
-    MDS = int(sMDS.val)    
-    NOD = int(sNOD.val/16)*16  
+    PFC = int(sPFC.val/2)*2+1
+    MDS = int(sMDS.val)
+    NOD = int(sNOD.val/16)*16
     TTH = int(sTTH.val)
     UR = int(sUR.val)
     SR = int(sSR.val)

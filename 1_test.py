@@ -2,9 +2,9 @@
 #
 # This file is part of StereoPi tutorial scripts.
 #
-# StereoPi tutorial is free software: you can redistribute it 
+# StereoPi tutorial is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation, either version 3 of the 
+# as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
 # StereoPi tutorial is distributed in the hope that it will be useful,
@@ -13,14 +13,14 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with StereoPi tutorial.  
+# along with StereoPi tutorial.
 # If not, see <http://www.gnu.org/licenses/>.
 #
 #          <><><> SPECIAL THANKS: <><><>
 #
 # Thanks to Adrian and http://pyimagesearch.com, as a lot of
 # code in this tutorial was taken from his lessons.
-#  
+#
 # Thanks to RPi-tankbot project: https://github.com/Kheiden/RPi-tankbot
 #
 # Thanks to rakali project: https://github.com/sthysel/rakali
@@ -34,8 +34,10 @@ import numpy as np
 import os
 from datetime import datetime
 
-# User quit method message 
+# User quit method message
 print("You can press 'Q' to quit this script.")
+
+
 
 # File for captured image
 filename = './scenes/photo.png'
@@ -43,6 +45,10 @@ filename = './scenes/photo.png'
 # Camera settimgs
 cam_width = 1280
 cam_height = 480
+# Set if image needs to be flipped horizontally (flips only each camera image not left right stereo image)
+cam_hflip = False
+# set camera rotation - set it to 180 or 0 if your images are coming upside down
+cam_rotation = 180
 
 # Final image capture settings
 scale_ratio = 1
@@ -62,7 +68,8 @@ print ("Scaled image resolution: "+str(img_width)+" x "+str(img_height))
 camera = PiCamera(stereo_mode='side-by-side',stereo_decimate=False)
 camera.resolution=(cam_width, cam_height)
 camera.framerate = 20
-camera.hflip = True
+camera.hflip = cam_hflip
+camera.rotation = cam_rotation
 
 t2 = datetime.now()
 counter = 0
@@ -86,5 +93,3 @@ for frame in camera.capture_continuous(capture, format="bgra", use_video_port=Tr
         cv2.imwrite(filename, frame)
         exit(0)
         break
-   
-    
